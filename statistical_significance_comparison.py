@@ -2,16 +2,24 @@
 
 # LinkedIn Post Draft
 #
-# I rarely publish technical critiques on LinkedIn, but this case is too important to ignore — it concerns public health and safety.
+# I rarely publish technical critiques on LinkedIn, but this case is too important to ignore because it concerns public
+# health and safety.
+# Note that this is an "old" example of an incorrect methodological approach.  It is not meant as a slam to the
+# original study authors, but rather to highlight the importance of proper statistical methods in scientific research
+# based on recent mention in the news.
 #
-# A foundational 1988 rat study that helped grant inulin its “generally recognized as safe” (GRAS) status with the FDA contained a critical statistical flaw.
-# The researchers used logistic regression, which is appropriate for binary outcomes like tumor presence, but then calculated significance as if it were a
-# linear regression. This means they applied significance tests designed for continuous outcomes to binary data, invalidating their conclusions.
+# A foundational 1988 rat study that helped grant inulin its “generally recognized as safe” (GRAS) status with the FDA
+# contained a critical statistical flaw.
+# The researchers used logistic regression, which is appropriate for binary outcomes like tumor presence, but then
+# calculated significance as if it were a linear regression. This means they applied significance tests designed for
+# continuous outcomes to binary data, invalidating their conclusions.
 #
-# When the data were reanalyzed correctly using logistic regression significance tests, the results showed a significant increase in tumors linked to inulin
+# When the data were reanalyzed correctly using logistic regression significance tests, the results showed a
+# significant increase in tumors linked to inulin
 # consumption — a finding that challenges decades of regulatory acceptance.
 #
-# This example underscores how crucial proper statistical methods are in scientific research, especially when public health decisions depend on them.
+# This example underscores how crucial proper statistical methods are in scientific research, especially when public
+# health decisions depend on them.
 # A single methodological oversight can have far-reaching consequences.
 #
 # I hope this encourages more scrutiny and transparency in safety studies that impact us all.
@@ -21,7 +29,7 @@
 # Python Code Examples for LinkedIn Post
 #
 # Below are Python code snippets illustrating the incorrect and correct significance calculations for binary outcome
-# data, suitable for sharing with your professional network.
+# data, suitable for sharing with my professional network.
 
 import numpy as np
 import statsmodels.api as sm
@@ -105,16 +113,26 @@ P-value from logistic regression: 0.2137
 """
 
 # 1. The Probability "Overhang" (Invalid Predictions)
-# In the Linear Regression (OLS), the model treats the binary outcome like a straight line. If you were to plug in a very high dose (e.g., dose = 1.5), the OLS model would predict a "tumor probability" greater than 100%, which is mathematically impossible. The Logistic Regression uses a sigmoid curve, ensuring predictions always stay logically bounded between 0 and 1.
+# In the Linear Regression (OLS), the model treats the binary outcome like a straight line. If you were to plug in a
+# very high dose (e.g., dose = 1.5), the OLS model would predict a "tumor probability" greater than 100%, which is
+# mathematically impossible. The Logistic Regression uses a sigmoid curve, ensuring predictions always stay logically
+# bounded between 0 and 1.
 # 2. Differing Assumptions of "Noise"
-# Linear Regression assumes the "errors" (residuals) are normally distributed and constant across all doses. For binary data (0 or 1), this is never true—the errors can only be specific values, which violates the foundational assumptions of the OLS significance tests (the t-test).
-# Logistic Regression assumes a Binomial distribution, which is the "natural" distribution for coin-flip style data like tumor presence.
+# Linear Regression assumes the "errors" (residuals) are normally distributed and constant across all doses. For binary
+# data (0 or 1), this is never true—the errors can only be specific values, which violates the foundational assumptions
+# of the OLS significance tests (the t-test).
+# Logistic Regression assumes a Binomial distribution, which is the "natural" distribution for coin-flip style data
+# like tumor presence.
 # 3. Sensitivity and Significance
 # In your specific output:
 # Linear P-value: 0.2250
 # Logistic P-value: 0.2137
-# The Logistic model is slightly more "sensitive" (a lower p-value) because it better understands the structure of the data. While both are above the 0.05 threshold in this tiny sample, the Logistic model provides a more accurate estimate of the log-odds of a tumor. In a larger study (like the 1988 rat study), this difference in sensitivity is exactly what causes the Linear model to "miss" a significant finding that the Logistic model correctly identifies.
+# The Logistic model is slightly more "sensitive" (a lower p-value) because it better understands the structure of the
+# data. While both are above the 0.05 threshold in this tiny sample, the Logistic model provides a more accurate
+# estimate of the log-odds of a tumor. In a larger study (like the 1988 rat study), this difference in sensitivity is
+# exactly what causes the Linear model to "miss" a significant finding that the Logistic model correctly identifies.
 # Summary for your post:
 # "Linear regression on binary data is like using a ruler to measure the curve of a ball.
 # The method might give you a number, but it ignores the fundamental shape of the object.
-# Logistic regression respects the 'binary' nature of the data, providing valid probabilities and more reliable significance tests."
+# Logistic regression respects the 'binary' nature of the data, providing valid probabilities and more reliable
+# significance tests."

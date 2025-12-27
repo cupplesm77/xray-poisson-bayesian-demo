@@ -8,6 +8,10 @@ from matplotlib import MatplotlibDeprecationWarning
 import numpy as np
 import seaborn as sns
 import scipy.stats as stats
+import pytensor
+
+# Set PyTensor to use Numba to avoid BLAS linking issues on Windows
+pytensor.config.mode = 'NUMBA'
 
 import warnings
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
@@ -255,7 +259,7 @@ def main():
     plt.show()
     del ax
 
-    # Working the same problem with PyMC
+    # Working the same problem with PyMC with Beta Prior
     # --------------------------------------------------------------------------
     # PyMC Solution (Probabilistic Programming)
     # --------------------------------------------------------------------------
@@ -325,17 +329,104 @@ def main():
         print("")
         print("Summary of PyMC Model:")
         print(az.summary(idata, var_names=["p"]))
+        del idata
 
     except ImportError:
         print("\n[!] PyMC or Arviz library not found.")
         print("    To run the PyMC example, please install them: pip install pymc arviz")
 
 
-    # Can you plot the posterior distribution in the same way that you plotted it in the previous example?
-    # How is this data different from the previous computations for the posterior?
+
+    # Working the same problem with PyMC, but with Uniform Prior
+    # --------------------------------------------------------------------------
+    # PyMC Solution (Probabilistic Programming)
+    # --------------------------------------------------------------------------
+    # Instead of manually calculating weights or grids, we define the model
+    # and let PyMC's sampler (MCMC) find the posterior distribution for us.
+
+    try:
+        import pymc as pm
+        import arviz as az  # Companion library for visualizing PyMC results
+
+        print("\n--- Running PyMC Model ---")
+
+        lower, upper = 0, 0.2
+        n, k = 100, 13
+
+        with pm.Model():
+            # 1. Prior: Define the Uniform prior for 'p'
+            p_param = pm.Uniform("p", lower, upper)
+
+            # 2. Likelihood: Define the Binomial likelihood given observed data
+            #    observed=k binds this variable to our actual data.
+            pm.Binomial("obs", n=n, p=p_param, observed=k)
+
+            # 3. Inference: Draw samples from the posterior
+            #    PyMC automatically chooses the NUTS sampler for continuous variables.
+            idata = pm.sample(draws=2000, chains=4, random_seed=42)
+
+        # 4. Visualization
+
+        # first I extract the max density
+        # Extract posterior samples
+        samples = idata["posterior"]["p"].values.flatten()
+
+        # Compute KDE
+        kde = stats.gaussian_kde(samples)
+        xs = np.linspace(0, 1, 500)
+        ys = kde(xs)
+        # compute max density
+        max_x = xs[np.argmax(ys)]
+        max_y = np.max(ys)
+
+        #    Plot the posterior distribution and the HDI (Highest Density Interval)
+        ref_val = idata.posterior["p"].mean().item()
+        ax = az.plot_posterior(idata,
+                          var_names=["p"],
+                          hdi_prob=0.98,
+                          group="posterior",
+                          ref_val=ref_val,
+                          )
+
+
+        # Show the y-axis and set a label
+
+        ax.get_yaxis().set_visible(True)
+        ax.set_ylabel("Probability Density")
+        ax.tick_params(axis='y', left=True, labelleft=True)  # Ensure ticks and labels are on
+
+        ax.annotate(f"max density ≈ {max_y:.2f}",
+                    xy=(max_x, max_y),
+                    xytext=(max_x + 0.05, max_y + 0.05),
+                    arrowprops=dict(arrowstyle="->"))
+
+        plt.title("Posterior Estimation using PyMC")
+        plt.show()
+        del ax
+
+        # Print a statistical summary
+        print("")
+        print("Summary of PyMC Model:")
+        print(az.summary(idata, var_names=["p"]))
+        del idata
+
+    except ImportError:
+        print("\n[!] PyMC or Arviz library not found.")
+        print("    To run the PyMC example, please install them: pip install pymc arviz")
+
 
 if __name__ == "__main__":
-    # add a comment here for freeze_support
 
+    # Verify PyTensor Configuration
+    print(f"--- PyTensor Mode: {pytensor.config.mode} ---")
+    try:
+        import numba
+        print(f"--- Numba Version: {numba.__version__} ---")
+    except ImportError:
+        print("--- [!] Numba not found. PyTensor may fall back to default mode. ---")
+    print()
+
+    # define parameters
+    # add a comment here for freeze_support
     freeze_support()
     main()
