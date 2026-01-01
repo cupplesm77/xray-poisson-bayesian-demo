@@ -1,5 +1,6 @@
 # How_Does_Bayesian_Inference_Work_2.py
 
+
 from multiprocessing.spawn import freeze_support
 
 import pandas as pd
@@ -22,7 +23,225 @@ warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 rng = np.random.default_rng(42)
 
 
+def plot_grid_posterior(
+        prior_dist,
+        likelihood_fn,
+        p_min=0.0,
+        p_max=1.0,
+        grid_size=500,
+        title="Posterior from Grid Approximation",
+        xlim=None,
+        prior_label="Prior"
+):
+    """
+    Compute and plot prior, likelihood, and posterior on a grid.
+
+    Parameters
+    ----------
+    prior_dist : scipy.stats distribution object
+        e.g., stats.uniform(loc=0, scale=0.2) or stats.beta(a, b)
+    likelihood_fn : callable
+        A function f(p_grid) that returns likelihood values for each p.
+    p_min, p_max : float
+        Range of p-grid
+    grid_size : int
+        Number of grid points
+    title : str
+        Plot title
+    xlim : tuple or None
+        Optional x-axis limits
+    prior_label : str
+        Label for the prior curve
+    """
+
+    # 1. Grid
+    p_grid = np.linspace(p_min, p_max, grid_size)
+
+    # 2. Prior density
+    prior_density = prior_dist.pdf(p_grid)
+
+    # 3. Likelihood (user-supplied function)
+    likelihood = likelihood_fn(p_grid)
+
+    # 4. Unnormalized posterior
+    unnormed_posterior = prior_density * likelihood
+
+    # 5. Normalize
+    posterior = unnormed_posterior / np.trapezoid(unnormed_posterior, p_grid)
+
+    # 6. Plot
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    sns.lineplot(x=p_grid, y=unnormed_posterior, label="Unnormalized posterior", ax=ax)
+    sns.lineplot(x=p_grid, y=posterior, label="Normalized posterior", ax=ax)
+    sns.lineplot(x=p_grid, y=prior_density, label=prior_label, linestyle="--", ax=ax)
+
+    ax.set_xlabel("probability of click, p")
+    ax.set_ylabel("Probability Density")
+    ax.set_title(title)
+    ax.legend()
+
+    if xlim:
+        ax.set_xlim(*xlim)
+
+    plt.show()
+    return p_grid, posterior
+
+
+# Various Likelihoods
+
+# binomial Likelihood
+def binomial_likelihood(n, k):
+    return lambda p: (p ** k) * ((1 - p) ** (n - k))
+
+
+# poisson Likelihood
+def poisson_likelihood(y):
+    return lambda lam: np.exp(-lam) * lam ** y
+
+
+# normal Likelihood
+def normal_likelihood(mu_obs, sigma):
+    return lambda mu: stats.norm(mu, sigma).pdf(mu_obs)
+
+
+# custom Likelihood
+# def custom_likelihood(data):
+#     return lambda theta: np.exp(-np.sum((data - model(theta)) ** 2))
+
+
 def main():
+    # """
+    # The first set of code below is based on a joint distribution; you can see the marginal distributions in the plots
+    # Further, we condition the data by choosing a particular number of visitors.  That led us to a distribution of
+    # propotion of clicks that give us this number of visitors:   Question:
+    #
+    # Is the code below, "real" bayesian analysis?
+    #
+    # Short answer: **yes — this *is* Bayesian data analysis**, just at the most introductory, simulation‑based level.
+    #
+    # Let me unpack why, because this is one of those moments where the *method* feels almost too simple,
+    # yet it’s genuinely Bayesian.
+    #
+    # ---
+    #
+    # # 🌟 Why this *is* Bayesian Data Analysis
+    #
+    # What you just did is the classic **generative‑model / prior‑predictive simulation** approach:
+    #
+    # 1. **Choose a prior**
+    #    ```r
+    #    mean_clicks <- runif(n_draws, min = 0, max = 80)
+    #    ```
+    #    This encodes your belief about the plausible range of daily clicks *before* seeing data.
+    #
+    # 2. **Generate data from the likelihood**
+    #    ```r
+    #    n_visitors <- rpois(n = n_draws, mean_clicks)
+    #    ```
+    #    This is the Poisson generative model:
+    #    \[
+    #    y \sim \text{Poisson}(\lambda)
+    #    \]
+    #
+    # 3. **Condition on the observed data**
+    #    ```r
+    #    posterior <- prior[prior$n_visitors == 19, ]
+    #    ```
+    #    This is the key Bayesian step:
+    #    You keep only the parameter values that *could have plausibly produced the observed data* (19 clicks).
+    #
+    # 4. **Visualize the posterior**
+    #    ```r
+    #    hist(posterior$mean_clicks)
+    #    ```
+    #
+    # This is literally the **Approximate Bayesian Computation (ABC)** idea in its simplest form:
+    #
+    # > Simulate from the prior → simulate data → keep the parameter values that match the observed data.
+    #
+    # It’s crude, but it *is* Bayesian.
+    #
+    # ---
+    #
+    # # 🌟 Why it feels “too simple”
+    #
+    # Because you’re doing the Bayesian update by **filtering** instead of by:
+    #
+    # - computing the likelihood explicitly
+    # - multiplying prior × likelihood
+    # - normalizing
+    #
+    # But mathematically, it’s the same idea.
+    #
+    # This is the “generative intuition” that McElreath, Gelman, and many modern Bayesian teachers emphasize:
+    #
+    # > *Bayesian inference is just conditioning on data.*
+    #
+    # Your simulation is literally doing that.
+    #
+    # ---
+    #
+    # # 🌟 Why the histogram gives 12–28
+    #
+    # Your posterior distribution is:
+    #
+    # \[
+    # p(\lambda \mid y=19)
+    # \]
+    #
+    # Given:
+    #
+    # - prior: Uniform(0, 80)
+    # - likelihood: Poisson(λ)
+    #
+    # The posterior is proportional to:
+    #
+    # \[
+    # \lambda^{19} e^{-\lambda}
+    # \]
+    #
+    # Which is a **Gamma(20, 1)** distribution (if the prior were flat on λ ≥ 0).
+    #
+    # The mean of that is 20, and the 95% interval is roughly 12–28.
+    #
+    # So your eyeballing was correct.
+    #
+    # ---
+    #
+    # # 🌟 Is this “real” Bayesian analysis?
+    #
+    # Yes — but it’s **introductory** Bayesian analysis.
+    #
+    # It’s meant to teach:
+    #
+    # - how priors generate predictions
+    # - how likelihoods connect parameters to data
+    # - how conditioning works
+    # - how the posterior emerges from the generative model
+    #
+    # Later chapters will introduce:
+    #
+    # - analytic posteriors
+    # - grid approximation
+    # - MCMC
+    # - hierarchical models
+    # - model comparison
+    #
+    # But the foundation is exactly what you just did.
+    #
+    # ---
+    #
+    # You’re doing the *right* thing by asking this question.
+    # This chapter is teaching the **intuition** behind Bayesian inference, not the full machinery.
+    #
+    # And that intuition — “simulate from the prior, simulate data, condition on what matches reality”.  Is the
+    # beating heart of Bayesian thinking.
+    #
+    # So yes, this is Bayesian data analysis.
+    # It’s just the **gentle on‑ramp**.
+    #
+    # """
 
     # define parameters
     n_samples = 100000
@@ -74,89 +293,20 @@ def main():
     plt.show()
 
 
-    # demonstrate correct simulation of the posterior with a uniform prior,
+    # Now assune that number of visitors, n_visitor, is 13.
+    n_visitors = 13
+    posterior = prior[prior['n_visitors'] == n_visitors]
+    sns.histplot(posterior['proportion_clicks'])
+    plt.xlabel('Proportion of Clicks')
+    plt.ylabel('Number')
+    plt.title('Histogram of Proportion of Clicks for n_visitors = 13')
+    plt.tight_layout()
+    plt.show()
+
+   # *****************************************************************************
+   # demonstrate correct simulation of the posterior with a uniform prior,
     # using grid approximation:
 
-    def plot_grid_posterior(
-            prior_dist,
-            likelihood_fn,
-            p_min=0.0,
-            p_max=1.0,
-            grid_size=500,
-            title="Posterior from Grid Approximation",
-            xlim=None,
-            prior_label="Prior"
-    ):
-        """
-        Compute and plot prior, likelihood, and posterior on a grid.
-
-        Parameters
-        ----------
-        prior_dist : scipy.stats distribution object
-            e.g., stats.uniform(loc=0, scale=0.2) or stats.beta(a, b)
-        likelihood_fn : callable
-            A function f(p_grid) that returns likelihood values for each p.
-        p_min, p_max : float
-            Range of p-grid
-        grid_size : int
-            Number of grid points
-        title : str
-            Plot title
-        xlim : tuple or None
-            Optional x-axis limits
-        prior_label : str
-            Label for the prior curve
-        """
-
-        # 1. Grid
-        p_grid = np.linspace(p_min, p_max, grid_size)
-
-        # 2. Prior density
-        prior_density = prior_dist.pdf(p_grid)
-
-        # 3. Likelihood (user-supplied function)
-        likelihood = likelihood_fn(p_grid)
-
-        # 4. Unnormalized posterior
-        unnormed_posterior = prior_density * likelihood
-
-        # 5. Normalize
-        posterior = unnormed_posterior / np.trapezoid(unnormed_posterior, p_grid)
-
-        # 6. Plot
-        fig, ax = plt.subplots(figsize=(8, 5))
-
-        sns.lineplot(x=p_grid, y=unnormed_posterior, label="Unnormalized posterior", ax=ax)
-        sns.lineplot(x=p_grid, y=posterior, label="Normalized posterior", ax=ax)
-        sns.lineplot(x=p_grid, y=prior_density, label=prior_label, linestyle="--", ax=ax)
-
-        ax.set_xlabel("probability of click, p")
-        ax.set_ylabel("Probability Density")
-        ax.set_title(title)
-        ax.legend()
-
-        if xlim:
-            ax.set_xlim(*xlim)
-
-        plt.show()
-        return p_grid, posterior
-
-
-    # binomial Likelihood
-    def binomial_likelihood(n, k):
-        return lambda p: (p ** k) * ((1 - p) ** (n - k))
-
-    # poisson Likelihood
-    def poisson_likelihood(y):
-        return lambda lam: np.exp(-lam) * lam ** y
-
-    # normal Likelihood
-    def normal_likelihood(mu_obs, sigma):
-        return lambda mu: stats.norm(mu, sigma).pdf(mu_obs)
-
-    # custom Likelihood
-    # def custom_likelihood(data):
-    #     return lambda theta: np.exp(-np.sum((data - model(theta)) ** 2))
 
     # for a uniform Prior
     prior_uniform = stats.uniform(loc=0.0, scale=0.2)
@@ -194,7 +344,7 @@ def main():
 
 
     num_samples = 100000
-    n_ads_shown = 100
+    # n_ads_shown = 100
     # Data and prior
     a, b = 5, 95
     n, k = 100, 13
