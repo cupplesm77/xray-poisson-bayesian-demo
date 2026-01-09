@@ -73,3 +73,10 @@ print("idx: ", idx)
 p_post_samples = long_list[idx]
 
 print(f"Post samples: {p_post_samples}")
+
+
+l = [3164, 3362, 4435, 3542, 3578, 4529]
+mean_l = np.mean(l)
+sigma_l = np.std(l)
+
+print(f"Mean: {mean_l}, Standard Deviation: {sigma_l}")

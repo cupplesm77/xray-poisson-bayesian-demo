@@ -15,6 +15,22 @@ import pymc as pm
 import arviz as az
 
 # Set PyTensor to use Numba to avoid BLAS linking issues on Windows
+# ---------------------------------------------------------------------------
+# NOTE ON PYTENSOR BACKENDS (FAST_RUN vs NUMBA)
+#
+# PyTensor’s default execution mode (“FAST_RUN”) relies on BLAS libraries
+# such as OpenBLAS or MKL. On Windows, especially when PyMC/PyTensor are
+# installed via pip, BLAS often fails to link correctly, producing warnings
+# and causing PyTensor to fall back to slower pure‑Python ops.
+#
+# The most reliable way to use FAST_RUN with full BLAS acceleration is to
+# install PyMC and its dependencies through a conda environment, where BLAS
+# libraries are bundled and properly configured.
+#
+# Since this project is running on Windows with a pip-based environment,
+# NUMBA mode is selected to avoid BLAS linking issues and to provide stable,
+# JIT‑compiled performance for PyMC sampling.
+# ---------------------------------------------------------------------------
 pytensor.config.mode = 'NUMBA'
 
 import warnings
@@ -302,6 +318,7 @@ def main():
     plt.title('Histogram of Proportion of Clicks for n_visitors = 13')
     plt.tight_layout()
     plt.show()
+
 
    # *****************************************************************************
    # demonstrate correct simulation of the posterior with a uniform prior,
