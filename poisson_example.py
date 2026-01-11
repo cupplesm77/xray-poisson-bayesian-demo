@@ -23,67 +23,7 @@ from scipy.stats import gamma
 import arviz as az
 import preliz as pz
 
-old=False
-
-if old:
-    draws = 100_000
-    observed_count0 = 10
-    p_min, p_max, = 0, 80
-    loc, scale = 0, 1
-    def simulate_posterior_poisson(n_draws=draws,
-                                   prior_min=p_min,
-                                   prior_max=p_max,
-                                   loc=0,
-                                   scale=1,
-                                   observed_count=observed_count0,
-                                   seed=42,
-                                   prior_distribution='uniform',
-                                   ):
-        """
-        Simulate a posterior distribution for a Poisson model using
-        a uniform prior and generative conditioning.
-
-        Parameters
-        ----------
-        n_draws : int
-            Number of prior samples to draw.
-        prior_min : float
-            Lower bound of Uniform prior for λ.
-        prior_max : float
-            Upper bound of Uniform prior for λ.
-        observed_count : int
-            Observed Poisson count (e.g., 19 clicks).
-        seed : int
-            Random seed for reproducibility.
-
-        Returns
-        -------
-        prior_samples : np.ndarray
-            Samples of λ from the prior.
-        posterior_samples : np.ndarray
-            Samples of λ that generated the observed count.
-        """
-
-        # employ a seed to ensure reproducibility
-        rng = np.random.default_rng(seed)
-
-        # 1. Prior:
-        if prior_distribution == 'uniform':
-            prior_samples = rng.uniform(prior_min, prior_max, size=n_draws)
-        elif prior_distribution == 'normal':
-            prior_samples = rng.normal(loc=loc , scale=scale, size=n_draws)
-        else:
-            raise ValueError(f"Unsupported prior distribution: {prior_distribution}")
-
-        # 2. Likelihood: simulate Poisson counts from each λ
-        simulated_counts = rng.poisson(lam=prior_samples)
-
-        # 3. Posterior: keep λ values that produced the observed count
-        posterior_samples = prior_samples[simulated_counts == observed_count]
-
-        return prior_samples, posterior_samples
-# else:
-print("Running the New Routine")
+# print("Running the New Routine")
 def simulate_posterior_poisson(
         n_draws=100_000,
         observed_count=10,
