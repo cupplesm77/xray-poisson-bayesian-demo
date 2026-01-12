@@ -166,7 +166,7 @@ def plot_posterior_density(
     title=None,
 ):
     """
-    Plot a posterior density using preLiz (Option 2).
+    Plot a posterior density using preLiz
 
     Parameters
     ----------
