@@ -18,6 +18,7 @@ implemented here through simulation (Approximate Bayesian Computation style).
 """
 
 import numpy as np
+import pandas as pd
 from functions import (
     simulate_posterior_poisson,
     plot_histograms,
@@ -28,8 +29,14 @@ from functions import (
 
 if __name__ == "__main__":
 
+    # create toy data
+    toy_data = pd.read_csv("data/toy_data.csv")
+    print(toy_data.head())
+    print("")
+
     # Sequential Baysesian Driver
-    observations = [3, 5, 2]
+    observations = toy_data["counts_per_exposure"].to_list()
+    print(observations)
 
     history = sequential_update_poisson(
         observations,
