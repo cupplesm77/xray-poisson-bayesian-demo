@@ -17,8 +17,6 @@ Bayesian inference = prior × likelihood → posterior,
 implemented here through simulation (Approximate Bayesian Computation style).
 """
 
-import numpy as np
-import pandas as pd
 from functions import (
     simulate_posterior_poisson,
     plot_histograms,
@@ -26,6 +24,9 @@ from functions import (
     plot_posterior_density,
     sequential_update_poisson
 )
+
+import numpy as np
+import pandas as pd
 
 if __name__ == "__main__":
 
