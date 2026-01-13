@@ -36,13 +36,13 @@ We begin with a controlled, pedagogical example that mirrors real scientific con
 - A faint X‑ray source is observed across **three short exposures**.  
 - Photon counts are low and noisy.  
 - Each exposure is modeled as:  
-  \[
+  $$
   y_i \sim \text{Poisson}(\lambda)
-  \]
+  $$
 - Prior on the photon rate:  
-  \[
+  $$
   \lambda \sim \text{Uniform}(0, 80)
-  \]
+  $$
 
 ### Observed counts
 ```
