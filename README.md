@@ -1,5 +1,5 @@
 
-# **Bayesian Sequential Updating for Poisson Count Data**  
+ **Bayesian Sequential Updating for Poisson Count Data**  
 *A simulation‑based introduction using a toy X‑ray astronomy example*
 
 ## **Overview**
