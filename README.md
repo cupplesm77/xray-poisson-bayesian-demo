@@ -201,3 +201,13 @@ Contributions are welcome—especially for real‑data extensions, visualization
 
 ---
 
+Appendix: Why This Method Is Sometimes Called ABC
+Although the Poisson likelihood is easy to evaluate analytically, the simulation‑based approach used in this 
+repository follows the structure of Approximate Bayesian Computation (ABC). In ABC methods, the likelihood is 
+not evaluated directly; instead, parameters are proposed from the prior, synthetic data are generated from 
+the model, and parameters are accepted only when the simulated data match the observed data. This 
+“simulate → compare → accept” pattern is the defining characteristic of ABC. In our toy example, we apply this 
+logic even though a closed‑form posterior exists, because it provides a transparent, generative view of Bayesian 
+updating and generalizes naturally to more complex models where the likelihood may be difficult or impossible 
+to compute. In that sense, the method is “approximate” in its algorithmic structure, not in its philosophical 
+commitment to Bayesian inference.
