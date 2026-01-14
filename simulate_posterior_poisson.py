@@ -22,7 +22,8 @@ from functions import (
     plot_histograms,
     analytic_posterior_gamma,
     plot_posterior_density,
-    sequential_update_poisson
+    sequential_update_poisson,
+    load_csv_with_schema,
 )
 
 import numpy as np
@@ -30,8 +31,16 @@ import pandas as pd
 
 if __name__ == "__main__":
 
-    # create toy data
-    toy_data = pd.read_csv("data/toy_data.csv")
+    # Load the toy-data dataframe
+
+    toy_data_path = "data/toy_data.csv"
+    expected_cols = ["observation","counts_per_exposure"]
+    dtype_map = {"observation": "int", "counts_per_exposure": "int"}
+    toy_data = load_csv_with_schema(toy_data_path,
+                         expected_cols,
+                         dtype_map,
+                         )
+
     print(toy_data.head())
     print("")
 

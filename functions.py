@@ -1,9 +1,45 @@
 # functions.py
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import gamma
 import arviz as az
+from pathlib import Path
+
+def load_csv_with_schema(data_path, expected_columns, dtype_map):
+    csv_path = Path(data_path)
+
+    # 1. Check file exists
+    if not csv_path.exists():
+        raise FileNotFoundError(f"CSV file not found: {csv_path}")
+
+    # 2. Define expected schema
+    expected_cols = expected_columns
+    dtype_map = dtype_map
+
+    # 3. Read with protection
+    try:
+        toy_data = pd.read_csv(
+            csv_path,
+            encoding="utf-8",
+            header=0,
+            dtype=dtype_map
+        )
+    except Exception as e:
+        raise RuntimeError(f"Failed to read CSV: {e}")
+
+    # 4. Validate columns
+    toy_data.columns = toy_data.columns.str.strip()
+    # ltemp = list(toy_data.columns)
+    if list(toy_data.columns) != expected_columns:
+        raise ValueError(f"Unexpected columns: {toy_data.columns}")
+
+    # 5. Validate missing values
+    if toy_data.isnull().any().any():
+        raise ValueError("CSV contains missing values — inspect before proceeding.")
+
+    return toy_data
 
 
 def simulate_posterior_poisson(
