@@ -150,6 +150,7 @@ def plot_histograms(prior_samples,
                     posterior_samples,
                     observed_count=observed_count0,
                     bins=50,
+                    title=None,
                     ):
     """
     Plot prior and posterior histograms for visual comparison.
@@ -162,8 +163,9 @@ def plot_histograms(prior_samples,
     ax[0].set_xlabel("λ (mean clicks per day)")
     ax[0].set_ylabel("Frequency")
 
+    title = f"Posterior Distribution for λ | y = {observed_count}"
     ax[1].hist(posterior_samples, bins=bins, color="steelblue", alpha=0.8)
-    ax[1].set_title(f"Posterior Distribution for λ | y = {observed_count}")
+    ax[1].set_title(title)
     ax[1].set_xlabel("λ (mean clicks per day)")
     ax[1].set_ylabel("Frequency")
 
@@ -335,3 +337,26 @@ def sequential_update_poisson(
         previous_posterior = posterior_samples
 
     return history
+
+def summarize_posterior(posterior_samples, ci=0.95):
+    """
+    Compute simple summary statistics for posterior samples of λ.
+
+    Returns
+    -------
+    summary : dict
+        Contains mean, median, and credible interval.
+    """
+    lower_q = (1 - ci) / 2
+    upper_q = 1 - lower_q
+
+    mean_val = np.mean(posterior_samples)
+    median_val = np.median(posterior_samples)
+    lower = np.quantile(posterior_samples, lower_q)
+    upper = np.quantile(posterior_samples, upper_q)
+
+    return {
+        "mean": mean_val,
+        "median": median_val,
+        "ci": (lower, upper),
+    }

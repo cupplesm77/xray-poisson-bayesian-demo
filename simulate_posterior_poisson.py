@@ -24,10 +24,8 @@ from functions import (
     plot_posterior_density,
     sequential_update_poisson,
     load_csv_with_schema,
+    summarize_posterior,
 )
-
-import numpy as np
-import pandas as pd
 
 if __name__ == "__main__":
 
@@ -37,9 +35,9 @@ if __name__ == "__main__":
     expected_cols = ["observation","counts_per_exposure"]
     dtype_map = {"observation": "int", "counts_per_exposure": "int"}
     toy_data = load_csv_with_schema(toy_data_path,
-                         expected_cols,
-                         dtype_map,
-                         )
+                                    expected_cols,
+                                    dtype_map,
+                                    )
 
     print(toy_data.head())
     print("")
@@ -61,11 +59,14 @@ if __name__ == "__main__":
         n_bins = 30
         # capture the observation number
         num_observation = his['observed']
+
         # histograms of prior and posterior samples
         plot_histograms(his["prior_samples"],
                         his["posterior_samples"],
                         observed_count=num_observation,
-                        bins=n_bins)
+                        bins=n_bins,
+                        title=f"Posterior Distribution for λ | y = {num_observation}",
+                        )
 
         # posterior density plot
         g = plot_posterior_density(
@@ -82,30 +83,7 @@ if __name__ == "__main__":
 
 
 
-    # Now Build the Inference Part of the Routine.
-
-    def summarize_posterior(posterior_samples, ci=0.95):
-        """
-        Compute simple summary statistics for posterior samples of λ.
-
-        Returns
-        -------
-        summary : dict
-            Contains mean, median, and credible interval.
-        """
-        lower_q = (1 - ci) / 2
-        upper_q = 1 - lower_q
-
-        mean_val = np.mean(posterior_samples)
-        median_val = np.median(posterior_samples)
-        lower = np.quantile(posterior_samples, lower_q)
-        upper = np.quantile(posterior_samples, upper_q)
-
-        return {
-            "mean": mean_val,
-            "median": median_val,
-            "ci": (lower, upper),
-        }
+    # Now for the Inference Part of the Routine.
 
     # ------------------------------------------------------------
     # Inference Summary from the Final Posterior
