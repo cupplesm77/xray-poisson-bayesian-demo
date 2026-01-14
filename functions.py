@@ -8,6 +8,40 @@ import arviz as az
 from pathlib import Path
 
 def load_csv_with_schema(data_path, expected_columns, dtype_map):
+    """
+    Load and validate a CSV file against a specific schema.
+
+    This utility ensures data integrity by checking for file existence,
+    stripping whitespace from headers, enforcing data types, and
+    verifying that the column structure matches the expected format.
+    It also checks for missing values to prevent downstream errors in
+    the Bayesian inference pipeline.
+
+    Parameters
+    ----------
+    data_path : str or Path
+        Relative or absolute path to the CSV file.
+    expected_columns : list of str
+        List of column names that MUST be present in the file.
+    dtype_map : dict
+        A dictionary mapping column names to their expected types
+        (e.g., {"observation": "int"}).
+
+    Returns
+    -------
+    toy_data : pd.DataFrame
+        The cleaned and validated DataFrame.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the file does not exist at the specified path.
+    RuntimeError
+        If pandas fails to read the file (e.g., encoding issues).
+    ValueError
+        If the columns don't match the expected_columns or if
+        missing values (NaNs) are detected.
+    """
     csv_path = Path(data_path)
 
     # 1. Check file exists
@@ -30,8 +64,9 @@ def load_csv_with_schema(data_path, expected_columns, dtype_map):
         raise RuntimeError(f"Failed to read CSV: {e}")
 
     # 4. Validate columns
+    # perform fundamental data cleaning as part of the validation
     toy_data.columns = toy_data.columns.str.strip()
-    # ltemp = list(toy_data.columns)
+    # check for expected column headers
     if list(toy_data.columns) != expected_columns:
         raise ValueError(f"Unexpected columns: {toy_data.columns}")
 
@@ -43,16 +78,16 @@ def load_csv_with_schema(data_path, expected_columns, dtype_map):
 
 
 def simulate_posterior_poisson(
-    n_draws=100_000,
-    observed_count=10,
-    prior_distribution="uniform",
-    prior_min=0.0,
-    prior_max=80.0,
-    loc=0.0,
-    scale=1.0,
-    previous_posterior=None,
-    seed=42,
-):
+        n_draws: int = 100_000,
+        observed_count: int = 10,
+        prior_distribution: str = "uniform",
+        prior_min: float = 0.0,
+        prior_max: float = 80.0,
+        loc: float = 0.0,
+        scale: float = 1.0,
+        previous_posterior: np.ndarray | None = None,
+        seed: int | np.random.Generator | None = 42,
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Simulate a posterior distribution for a Poisson rate parameter λ
     using generative conditioning (likelihood-based rejection sampling).
@@ -90,7 +125,11 @@ def simulate_posterior_poisson(
         match the observed count.
     """
 
-    rng = np.random.default_rng(seed)
+    # Robust Generator initialization
+    if isinstance(seed, np.random.Generator):
+        rng = seed
+    else:
+        rng = np.random.default_rng(seed)
 
     # ----------------------------------------------------------------------
     # PRIOR SAMPLING
@@ -141,6 +180,13 @@ def simulate_posterior_poisson(
     # POSTERIOR EXTRACTION
     # ----------------------------------------------------------------------
     posterior_samples = prior_samples[simulated_counts == observed_count]
+
+    if len(posterior_samples) == 0:
+        import warnings
+        warnings.warn(
+            f"Zero samples accepted for observed_count={observed_count}. "
+            "The prior may not overlap with the likelihood (Sample Collapse)."
+        )
 
     return prior_samples, posterior_samples
 
@@ -250,7 +296,6 @@ def plot_posterior_density(
             plt.suptitle(title)
 
     plt.show()
-    return ax
 
 
 # Sequential Bayesian Updating Driver
@@ -262,15 +307,15 @@ def plot_posterior_density(
 # - Produces a clean record of the entire inference process
 
 def sequential_update_poisson(
-    observations,
+    observations: list[int],
     n_draws=100_000,
     prior_distribution="uniform",
     prior_min=0.0,
     prior_max=80.0,
     loc=0.0,
     scale=1.0,
-    seed=42,
-):
+    seed: int | np.random.Generator | None = 42,
+) -> list[dict]:
     """
     Perform sequential Bayesian updating for a Poisson rate parameter λ
     using generative conditioning.
@@ -338,25 +383,32 @@ def sequential_update_poisson(
 
     return history
 
-def summarize_posterior(posterior_samples, ci=0.95):
+def summarize_posterior(posterior_samples: np.ndarray,
+                        ci: float = 0.95,
+                        ) -> dict:
     """
-    Compute simple summary statistics for posterior samples of λ.
+    Compute summary statistics for posterior samples of λ.
+
+    Parameters
+    ----------
+    posterior_samples : np.ndarray
+        Array of samples from the posterior distribution.
+    ci : float
+        Credible interval width (e.g., 0.95 for 95%).
 
     Returns
     -------
-    summary : dict
-        Contains mean, median, and credible interval.
+    Dict containing mean, median, and credible interval tuple.
     """
+    if len(posterior_samples) == 0:
+        return {"mean": np.nan, "median": np.nan, "ci": (np.nan, np.nan)}
+
     lower_q = (1 - ci) / 2
     upper_q = 1 - lower_q
 
-    mean_val = np.mean(posterior_samples)
-    median_val = np.median(posterior_samples)
-    lower = np.quantile(posterior_samples, lower_q)
-    upper = np.quantile(posterior_samples, upper_q)
-
     return {
-        "mean": mean_val,
-        "median": median_val,
-        "ci": (lower, upper),
+        "mean": np.mean(posterior_samples),
+        "median": np.median(posterior_samples),
+        "ci": (np.quantile(posterior_samples, lower_q),
+               np.quantile(posterior_samples, upper_q)),
     }

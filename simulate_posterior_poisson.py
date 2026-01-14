@@ -102,7 +102,7 @@ if __name__ == "__main__":
     print(
         "Based on the three observed exposures [3, 5, 2], the posterior distribution \n"
         "suggests that the underlying photon rate λ for this faint X‑ray source is \n"
-        f"most plausibly in the range {summary['ci'][0]:.1f}–{summary['ci'][1]:.1f} counts per exposure. \n"
+        f"most plausibly in the range {summary['ci'][0]:.1f} to {summary['ci'][1]:.1f} counts per exposure. \n"
         "The posterior mean and median both fall near the center of this interval, indicating \n"
         "that the sequential Bayesian update has stabilized toward a consistent estimate of the \n"
         "source brightness. Although the data are sparse, the posterior distribution provides a \n"
