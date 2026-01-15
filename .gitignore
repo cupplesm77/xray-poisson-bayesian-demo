@@ -3,15 +3,15 @@
 *.iml
 
 # Ignore all generated plots by default
-plots/
-
-# But allow the specific ones used in the README
-!plots/step_1_obs_3_histogram.png
-!plots/step_1_obs_3_density.png
-!plots/step_2_obs_5_histogram.png
-!plots/step_2_obs_5_density.png
-!plots/step_3_obs_2_histogram.png
-!plots/step_3_obs_2_density.png
+#plots/
+#
+## But allow the specific ones used in the README
+#!plots/step_1_obs_3_histogram.png
+#!plots/step_1_obs_3_density.png
+#!plots/step_2_obs_5_histogram.png
+#!plots/step_2_obs_5_density.png
+#!plots/step_3_obs_2_histogram.png
+#!plots/step_3_obs_2_density.png
 
 # Python artifacts
 __pycache__/
