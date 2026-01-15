@@ -17,6 +17,8 @@ Bayesian inference = prior × likelihood → posterior,
 implemented here through simulation (Approximate Bayesian Computation style).
 """
 
+from pathlib import Path
+
 from functions import (
     simulate_posterior_poisson,
     plot_histograms,
@@ -31,6 +33,7 @@ if __name__ == "__main__":
 
     # Load the toy-data dataframe
 
+    plot_path = "plots"
     toy_data_path = "data/toy_data.csv"
     expected_cols = ["observation","counts_per_exposure"]
     dtype_map = {"observation": "int", "counts_per_exposure": "int"}
@@ -46,6 +49,7 @@ if __name__ == "__main__":
     observations = toy_data["counts_per_exposure"].to_list()
     print(observations)
 
+    # Create a container for simulation history
     history = sequential_update_poisson(
         observations,
         n_draws=100_000,
@@ -54,18 +58,28 @@ if __name__ == "__main__":
         prior_max=80,
     )
 
-
+    # Driver loop
     for i, his in enumerate(history, start=0):
         n_bins = 30
         # capture the observation number
         num_observation = his['observed']
+        step = his['step']
 
-        # histograms of prior and posterior samples
+        # Define save paths using Path for cross-platform compatibility
+        plot_dir = Path("plots/")
+        plot_dir.mkdir(exist_ok=True)  # Ensure directory exists
+
+        histogram_path = plot_dir / f"step_{step}_obs_{num_observation}_histogram.png"
+        density_path = plot_dir / f"step_{step}_obs_{num_observation}_density.png"
+
+
+    # histograms of prior and posterior samples
         plot_histograms(his["prior_samples"],
                         his["posterior_samples"],
                         observed_count=num_observation,
                         bins=n_bins,
                         title=f"Posterior Distribution for λ | y = {num_observation}",
+                        save_path=histogram_path,
                         )
 
         # posterior density plot
@@ -78,9 +92,9 @@ if __name__ == "__main__":
                 linewidth=2,
                 facet=None,
                 title=f"Posterior Density for λ Given Observed Count = {num_observation}",
+                save_path=density_path,
         )
         del g
-
 
 
     # Now for the Inference Part of the Routine.

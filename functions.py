@@ -42,9 +42,11 @@ def load_csv_with_schema(data_path, expected_columns, dtype_map):
         If the columns don't match the expected_columns or if
         missing values (NaNs) are detected.
     """
+
+    # Pathlib Integration: Uses pathlib.Path for robust, cross-platform file path handling.
     csv_path = Path(data_path)
 
-    # 1. Check file exists
+    # 1. Check if the file exists
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV file not found: {csv_path}")
 
@@ -67,7 +69,7 @@ def load_csv_with_schema(data_path, expected_columns, dtype_map):
     # perform fundamental data cleaning as part of the validation
     toy_data.columns = toy_data.columns.str.strip()
     # check for expected column headers
-    if list(toy_data.columns) != expected_columns:
+    if list(toy_data.columns) != expected_cols:
         raise ValueError(f"Unexpected columns: {toy_data.columns}")
 
     # 5. Validate missing values
@@ -98,7 +100,7 @@ def simulate_posterior_poisson(
         Number of prior samples to draw.
     observed_count : int
         Observed Poisson count.
-    prior_distribution : {"uniform", "normal", "posterior"}
+    prior_distribution: {"uniform", "normal", "posterior"}
         Choice of prior distribution for λ.
         - "uniform": Uniform(prior_min, prior_max)
         - "normal": Normal(loc, scale), truncated to λ > 0
@@ -197,6 +199,7 @@ def plot_histograms(prior_samples,
                     observed_count=observed_count0,
                     bins=50,
                     title=None,
+                    save_path=None,
                     ):
     """
     Plot prior and posterior histograms for visual comparison.
@@ -216,26 +219,12 @@ def plot_histograms(prior_samples,
     ax[1].set_ylabel("Frequency")
 
     plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"Histogram saved to: {save_path}")
+
     plt.show()
-
-
-def analytic_posterior_gamma(observed_count, prior_min=0, prior_max=80):
-    """
-    For reference: if the prior were flat on [0, ∞), the posterior would be:
-
-        λ | y ~ Gamma(shape = y + 1, rate = 1)
-
-    This function returns the mean and 95% interval of that analytic posterior.
-    """
-
-    shape = observed_count + 1
-    rate = 1.0
-
-    mean = shape / rate
-    lower = gamma.ppf(0.025, a=shape, scale=1/rate)
-    upper = gamma.ppf(0.975, a=shape, scale=1/rate)
-
-    return mean, (lower, upper)
 
 
 # plot the posterior density
@@ -248,6 +237,7 @@ def plot_posterior_density(
     linewidth=2,
     facet=None,
     title=None,
+    save_path=None,
 ):
     """
     Plot a posterior density using preLiz
@@ -269,7 +259,7 @@ def plot_posterior_density(
     facet : str or None, optional
         Facet by "chain", "draw", or any group dimension.
     title : str or None, optional
-        Optional title for the plot.
+        Title for the plot.
     """
 
     """
@@ -292,8 +282,12 @@ def plot_posterior_density(
             ax.set_title(title)
             ax.set_xlabel(var_name)
         else:
-            # Handle cases where multiple axes might be returned (e.g. if idata is InferenceData)
+            # Handle cases where multiple axes might be returned (e.g., if idata is InferenceData)
             plt.suptitle(title)
+
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"Density plot saved to: {save_path}")
 
     plt.show()
 
@@ -382,6 +376,25 @@ def sequential_update_poisson(
         previous_posterior = posterior_samples
 
     return history
+
+def analytic_posterior_gamma(observed_count, prior_min=0, prior_max=80):
+    """
+    For reference: if the prior were flat on [0, ∞), the posterior would be:
+
+        λ | y ~ Gamma(shape = y + 1, rate = 1)
+
+    This function returns the mean and 95% interval of that analytic posterior.
+    """
+
+    shape = observed_count + 1
+    rate = 1.0
+
+    mean = shape / rate
+    lower = gamma.ppf(0.025, a=shape, scale=1/rate)
+    upper = gamma.ppf(0.975, a=shape, scale=1/rate)
+
+    return mean, (lower, upper)
+
 
 def summarize_posterior(posterior_samples: np.ndarray,
                         ci: float = 0.95,
