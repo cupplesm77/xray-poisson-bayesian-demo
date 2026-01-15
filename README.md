@@ -5,9 +5,9 @@
 This repository demonstrates **Bayesian inference for Poisson count data** using a transparent, simulation‑based 
 approach. The workflow follows the generative logic taught in introductory Bayesian courses:
 
-1. Draw samples from a prior distribution over the Poisson rate parameter \( \lambda \)  
-2. Simulate Poisson counts from each sampled \( \lambda \)  
-3. Condition on the observed data by retaining only those \( \lambda \) values that could have produced the observed count  
+1. Draw samples from a prior distribution over the Poisson rate parameter $\lambda$  
+2. Simulate Poisson counts from each sampled $\lambda$  
+3. Condition on the observed data by retaining only those $\lambda$ values that could have produced the observed count  
 4. Visualize and analyze the resulting posterior distribution  
 
 This approach uses **likelihood‑based rejection sampling**, a simple form of simulation‑based Bayesian inference. 
@@ -32,20 +32,19 @@ This repository implements the simplest version of that workflow to make the cor
 ## **Toy Example: Faint X‑ray Source with Three Exposures**
 We begin with a controlled, pedagogical example that mirrors real scientific conditions.
 
-### **Scenario**
-- A faint X‑ray source is observed across **three short exposures**  
-- Photon counts are low and noisy  
-- Each exposure is modeled as:
+### **Statistical Model**
+The model assumes that the observed photon counts $y_i$ follow a Poisson distribution, conditioned 
+on a rate parameter $\lambda$:
 
-\[
+$$
 y_i \sim \text{Poisson}(\lambda)
-\]
+$$
 
-- Prior on the photon rate:
+We define a non-informative Uniform prior over the plausible range of $\lambda$:
 
-\[
+$$
 \lambda \sim \text{Uniform}(0, 80)
-\]
+$$
 
 ### **Observed counts**  (placed in a csv file in the data folder)
 ```
@@ -54,7 +53,7 @@ y_i \sim \text{Poisson}(\lambda)
 
 ### **Goal**
 Perform **sequential Bayesian updating** as each exposure arrives, visualizing how the posterior 
-distribution for \( \lambda \) evolves.
+distribution for $\lambda$ evolves.
 
 This toy example serves as a clean, reproducible foundation before moving to real X‑ray data.
 
@@ -107,7 +106,7 @@ plot_histograms(prior_samples, posterior_samples, observed_count=5, bins=30)
 ```
 
 #### **4. `analytic_posterior_gamma`**  
-Provides the analytic Gamma posterior for comparison when the prior is flat on \([0, \infty)\).
+Provides the analytic Gamma posterior for comparison when the prior is flat on $[0, +\infty)$.
 
 ```python
 mean, (lower, upper) = analytic_posterior_gamma(observed_count=5)
@@ -201,7 +200,7 @@ Possible extensions include:
 - Comparing Bayesian posteriors with classical estimators  
 - Incorporating background subtraction  
 - Exploring hierarchical priors  
-- Modeling time‑varying \( \lambda \) for variable sources  
+- Modeling time‑varying $\lambda$ for variable sources  
 - Publishing a short technical note or arXiv preprint  
 
 The toy example serves as a clean, reproducible foundation for these future steps.
@@ -224,6 +223,23 @@ Add your preferred license here (MIT recommended for scientific code).
 
 ## **Contributions**
 Contributions are welcome—especially for real‑data extensions, visualization improvements, and statistical enhancements.
+
+---
+
+## **Visualizing the Sequential Update**
+Visualizations are an integral part of Bayesian inference, helping to understand the 
+posterior distribution and the impact of data on parameter estimates. This repository 
+includes basic visualizations for the Poisson process, but more sophisticated visualizations 
+can be added to enhance understanding and communication of results.
+
+As each exposure is processed, the posterior distribution for $\lambda$ narrows, representing 
+our increasing certainty about the source brightness.
+
+| Step | Observed Count | Prior vs Posterior Histogram | Posterior Density (KDE) |
+| :--- | :---: | :---: | :---: |
+| **1** | 3 | ![Hist 1](plots/step_1_obs_3_histogram.png) | ![Dens 1](plots/step_1_obs_3_density.png) |
+| **2** | 5 | ![Hist 2](plots/step_2_obs_5_histogram.png) | ![Dens 2](plots/step_2_obs_5_density.png) |
+| **3** | 2 | ![Hist 3](plots/step_3_obs_2_histogram.png) | ![Dens 3](plots/step_3_obs_2_density.png) |
 
 ---
 
