@@ -193,10 +193,9 @@ def simulate_posterior_poisson(
     return prior_samples, posterior_samples
 
 # Plot a histogram
-observed_count0 = 10
 def plot_histograms(prior_samples,
                     posterior_samples,
-                    observed_count=observed_count0,
+                    observed_count=None,
                     bins=50,
                     title=None,
                     save_path=None,
@@ -212,7 +211,9 @@ def plot_histograms(prior_samples,
     ax[0].set_xlabel("λ (mean clicks per day)")
     ax[0].set_ylabel("Frequency")
 
-    title = f"Posterior Distribution for λ | y = {observed_count}"
+    if title is None and observed_count is not None:
+        title = f"Posterior Distribution for λ | y = {observed_count}"
+
     ax[1].hist(posterior_samples, bins=bins, color="steelblue", alpha=0.8)
     ax[1].set_title(title)
     ax[1].set_xlabel("λ (mean clicks per day)")
