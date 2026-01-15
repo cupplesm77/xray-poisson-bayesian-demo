@@ -19,6 +19,8 @@ implemented here through simulation (Approximate Bayesian Computation style).
 
 from pathlib import Path
 
+from matplotlib import pyplot as plt
+
 from functions import (
     simulate_posterior_poisson,
     plot_histograms,
@@ -58,6 +60,10 @@ if __name__ == "__main__":
         prior_max=80,
     )
 
+    # Prepare directory for plots
+    plot_dir = Path("plots/")
+    plot_dir.mkdir(exist_ok=True)  # Ensure directory exists
+
     # Driver loop
     for i, his in enumerate(history, start=0):
         n_bins = 30
@@ -66,9 +72,6 @@ if __name__ == "__main__":
         step = his['step']
 
         # Define save paths using Path for cross-platform compatibility
-        plot_dir = Path("plots/")
-        plot_dir.mkdir(exist_ok=True)  # Ensure directory exists
-
         histogram_path = plot_dir / f"step_{step}_obs_{num_observation}_histogram.png"
         density_path = plot_dir / f"step_{step}_obs_{num_observation}_density.png"
 
@@ -94,7 +97,7 @@ if __name__ == "__main__":
                 title=f"Posterior Density for λ Given Observed Count = {num_observation}",
                 save_path=density_path,
         )
-        del g
+        plt.close('all') # Better than 'del' for freeing Matplotlib memory
 
 
     # Now for the Inference Part of the Routine.
